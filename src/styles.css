@@ -38,7 +38,7 @@ header .logo { align-items: center; display: flex; gap: 10px; margin-right: 10px
 header .logo .brand-mark { border-radius: 10px; display: block; height: 42px; width: 42px; }
 header .logo .brand-lockup { align-items: stretch; border: 1px solid #566879; border-radius: 8px; display: inline-flex; overflow: hidden; }
 header .logo .brand-name { align-items: center; background: #31404f; color: #fff; display: inline-flex; font-size: 20px; font-weight: 760; letter-spacing: -.03em; line-height: 1; padding: 0 12px 0 10px; }
-header .logo .brand-aws { align-items: center; background: var(--accent); color: #17212d; display: inline-flex; font-size: 12px; font-weight: 850; letter-spacing: .05em; padding: 0 8px; }
+header .logo .brand-aws { align-items: center; background: var(--accent); color: #17212d; display: inline-flex; font-size: 15px; font-weight: 850; letter-spacing: .05em; padding: 0 9px; }
 header .logo .beta { border-left: 1px solid #485868; color: #aebdca; font-size: 10px; font-weight: 600; letter-spacing: .03em; padding-left: 9px; }
 header .sep { background: #435464; height: 24px; margin: 0 2px; width: 1px; }
 header .spacer { flex: 1; }
