@@ -4,7 +4,7 @@ import { FLOWS, FLOW_KEYS } from '../data/flows';
 import { svcById, shpById, grpById } from '../data/catalog';
 import type { DiagramEdge, DiagramNode, FlowKey } from '../types';
 
-export function PropertiesPanel() {
+export function PropertiesPanel({ onClose }: { onClose: () => void }) {
   const sel = useStore((s) => s.sel);
   const doc = useStore((s) => s.doc);
   const patchNode = useStore((s) => s.patchNode);
@@ -26,19 +26,19 @@ export function PropertiesPanel() {
 
   if (!sel) {
     body = (
-      <div className="empty">
-        要素を選択すると編集できます。
-        <br />
-        <br />
-        ・パレットから<b>ドラッグ</b>で配置（ダブルクリックでも可）
-        <br />
-        ・ノードの<b>オレンジ丸</b>から別ノードへドラッグで<b>接続</b>（接続後に色=フローを選択）
-        <br />
-        ・枠/テキストは<b>右下</b>でリサイズ
-        <br />
-        ・<b>Ctrl+D</b>複製 / <b>Delete</b>削除 / <b>Ctrl+Z</b>元に戻す
-        <br />
-        ・背景ドラッグでパン、Ctrl+ホイールでズーム
+      <div className="empty empty-state">
+        <div className="empty-icon">⌘</div>
+        <h3>選択した要素を編集</h3>
+        <p>キャンバス上の要素や接続線を選択すると、ここで内容を変更できます。</p>
+        <div className="quick-start">
+          <p className="eyebrow">はじめ方</p>
+          <ol>
+            <li><b>左の一覧</b>からサービスを追加</li>
+            <li><b>オレンジの接続点</b>をドラッグして配線</li>
+            <li>接続線を選び、<b>フロー種別</b>を設定</li>
+          </ol>
+        </div>
+        <p className="shortcut-hint">⌘/Ctrl + D 複製　·　Delete 削除　·　⌘/Ctrl + Z 元に戻す</p>
       </div>
     );
   } else if (sel.kind === 'edge') {
@@ -66,8 +66,14 @@ export function PropertiesPanel() {
   }
 
   return (
-    <aside id="props">
-      <div className="ph">{head}</div>
+    <aside id="props" className="sidebar sidebar-right" aria-label="インスペクター">
+      <div className="ph">
+        <div>
+          <span className="eyebrow">インスペクター</span>
+          <div className="panel-title">{head}</div>
+        </div>
+        <button className="sidebar-close" type="button" onClick={onClose} aria-label="インスペクターを閉じる">×</button>
+      </div>
       <div className="pbody">{body}</div>
     </aside>
   );
