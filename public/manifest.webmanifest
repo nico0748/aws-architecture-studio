@@ -1,0 +1,17 @@
+{
+  "name": "AWS Architecture Studio",
+  "short_name": "Architecture Studio",
+  "description": "AWS インフラ構成図を作成・書き出しできるブラウザアプリケーション",
+  "lang": "ja",
+  "display": "standalone",
+  "background_color": "#eef1f5",
+  "theme_color": "#232f3e",
+  "icons": [
+    {
+      "src": "/architecture-studio.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

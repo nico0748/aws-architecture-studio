@@ -1,6 +1,6 @@
 # AWS Architecture Studio
 
-AWS のインフラ構成図をブラウザ上で作成し、**PowerPoint (.pptx) / SVG / PNG / JSON** にエクスポートできる専用エディタです。HTML プロトタイプを土台に **Vite + React + TypeScript** で再構築しています。
+AWS のインフラ構成図をブラウザ上で作成し、**PowerPoint (.pptx) / SVG / PNG** に書き出し、プロジェクトを JSON で保存・復元できる専用エディタです。HTML プロトタイプを土台に **Vite + React + TypeScript** で再構築しています。
 
 ![sample](docs/sample.png)
 
@@ -13,6 +13,7 @@ AWS のインフラ構成図をブラウザ上で作成し、**PowerPoint (.pptx
 - **テキスト注釈**・**付箋(凡例)**・アクター配置
 - **Terraform / CloudFormation インポート**（主要リソースを自動レイアウト）
 - **Undo/Redo**、グリッド吸着、複製（Ctrl+D）、パン & ズーム
+- **プロジェクトの保存・復元**（JSON ファイル／JSON テキスト）
 - 依存ライブラリはバンドルされるため、ビルド後は**オフラインでも動作**
 
 ## セットアップ
@@ -31,10 +32,11 @@ Node.js 18 以上を推奨します。
 1. 左パレットからキャンバスへ**ドラッグ**（ダブルクリックでも配置）。
 2. ノードの**オレンジ丸**から別ノードへドラッグして**接続**。
 3. 接続を選択し、右パネルで**フロー種別（色）・ラベル・配線**を設定。
-4. 「挿入」からセクション枠・テキスト・凡例を追加。
-5. 「エクスポート」から **PowerPoint / SVG / PNG / JSON** を出力。
+4. 「追加」からセクション枠・テキスト・凡例を追加。
+5. 「書き出す」から **PowerPoint / SVG / PNG** を出力。
+6. 「操作」→「プロジェクト」から JSON を保存・復元。
 
-「参考サンプル」ボタンで MLOps 構成の作例を読み込めます。
+「テンプレート」ボタンで MLOps 構成の作例を読み込めます。
 
 ## ディレクトリ構成
 
@@ -61,7 +63,7 @@ src/
 └─ components/
    ├─ Toolbar.tsx  Palette.tsx  Canvas.tsx
    ├─ NodeView.tsx  Edges.tsx  PropertiesPanel.tsx  Toast.tsx
-   └─ modals/{ImportModal,JsonModal}.tsx
+   └─ modals/{ImportModal,ProjectModal}.tsx
 ```
 
 ## アイコン素材について

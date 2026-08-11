@@ -90,6 +90,8 @@ export interface CatalogShape {
   label: string;
   svg: string;
   group: 'Actor' | 'Logo';
+  /** Logo のみ。パレットの小分類（docs/logo-candidates.md の節に対応）。 */
+  cat?: string;
 }
 
 export interface Catalog {

@@ -36,8 +36,6 @@ interface StoreState {
   beginChange: () => void;
   undo: () => void;
   redo: () => void;
-  canUndo: () => boolean;
-  canRedo: () => boolean;
 
   // selection / view
   setSelection: (sel: Selection | null) => void;
@@ -53,10 +51,13 @@ interface StoreState {
   patchEdge: (id: string, patch: Partial<DiagramEdge>) => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
+  bringForward: () => void;
+  sendBackward: () => void;
+  bringToFront: () => void;
+  sendToBack: () => void;
 
   // document ops
   setDoc: (doc: DiagramDoc, commit?: boolean) => void;
-  clearAll: () => void;
 }
 
 const emptyDoc = (): DiagramDoc => ({ nodes: [], edges: [], seq: 1 });
@@ -101,9 +102,6 @@ export const useStore = create<StoreState>((set, get) => ({
       sel: null,
     });
   },
-
-  canUndo: () => get().undoStack.length > 0,
-  canRedo: () => get().redoStack.length > 0,
 
   setSelection: (sel) => set({ sel }),
   setView: (v) => set((s) => ({ view: { ...s.view, ...v } })),
@@ -205,13 +203,55 @@ export const useStore = create<StoreState>((set, get) => ({
     set((s) => ({ doc: { ...s.doc, nodes: [...s.doc.nodes, copy], seq: s.doc.seq + 1 }, sel: { kind: 'node', id } }));
   },
 
+  bringForward: () => {
+    const { sel, doc } = get();
+    if (!sel || sel.kind !== 'node') return;
+    const index = doc.nodes.findIndex((n) => n.id === sel.id);
+    if (index < 0 || index === doc.nodes.length - 1) return;
+    get().beginChange();
+    const nodes = [...doc.nodes];
+    [nodes[index], nodes[index + 1]] = [nodes[index + 1], nodes[index]];
+    set({ doc: { ...doc, nodes } });
+  },
+
+  sendBackward: () => {
+    const { sel, doc } = get();
+    if (!sel || sel.kind !== 'node') return;
+    const index = doc.nodes.findIndex((n) => n.id === sel.id);
+    if (index <= 0) return;
+    get().beginChange();
+    const nodes = [...doc.nodes];
+    [nodes[index], nodes[index - 1]] = [nodes[index - 1], nodes[index]];
+    set({ doc: { ...doc, nodes } });
+  },
+
+  bringToFront: () => {
+    const { sel, doc } = get();
+    if (!sel || sel.kind !== 'node') return;
+    const index = doc.nodes.findIndex((n) => n.id === sel.id);
+    if (index < 0 || index === doc.nodes.length - 1) return;
+    get().beginChange();
+    const nodes = [...doc.nodes];
+    const [node] = nodes.splice(index, 1);
+    nodes.push(node);
+    set({ doc: { ...doc, nodes } });
+  },
+
+  sendToBack: () => {
+    const { sel, doc } = get();
+    if (!sel || sel.kind !== 'node') return;
+    const index = doc.nodes.findIndex((n) => n.id === sel.id);
+    if (index <= 0) return;
+    get().beginChange();
+    const nodes = [...doc.nodes];
+    const [node] = nodes.splice(index, 1);
+    nodes.unshift(node);
+    set({ doc: { ...doc, nodes } });
+  },
+
   setDoc: (doc, commit = true) => {
     if (commit) get().beginChange();
     set({ doc, sel: null });
   },
 
-  clearAll: () => {
-    get().beginChange();
-    set((s) => ({ doc: { ...emptyDoc(), seq: s.doc.seq }, sel: null }));
-  },
 }));

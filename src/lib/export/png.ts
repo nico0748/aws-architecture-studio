@@ -27,7 +27,3 @@ export function exportPng(doc: DiagramDoc, scale = 2): Promise<void> {
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   });
 }
-
-export function exportJson(doc: DiagramDoc): void {
-  triggerDownload('aws-architecture-' + timestamp() + '.json', new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }));
-}

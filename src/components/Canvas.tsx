@@ -169,13 +169,15 @@ export function Canvas() {
       </div>
 
       <div id="statusbar">
-        {doc.nodes.length} ノード / {doc.edges.length} 接続 ・ {Math.round(view.zoom * 100)}%
+        <span>{doc.nodes.length} 個の要素</span><i />
+        <span>{doc.edges.length} 本の接続</span>
       </div>
       <div id="zoombar">
-        <button title="縮小" onClick={() => zoomCenter(0.87)}>−</button>
-        <div className="zval">{Math.round(view.zoom * 100)}%</div>
-        <button title="拡大" onClick={() => zoomCenter(1.15)}>＋</button>
-        <button title="全体表示" onClick={fitView}>⤢</button>
+        <button title="縮小" aria-label="縮小" onClick={() => zoomCenter(0.87)}>−</button>
+        <div className="zval" aria-label={`倍率 ${Math.round(view.zoom * 100)} パーセント`}>{Math.round(view.zoom * 100)}%</div>
+        <button title="拡大" aria-label="拡大" onClick={() => zoomCenter(1.15)}>＋</button>
+        <span className="zoom-divider" />
+        <button className="fit-button" title="全体を表示" aria-label="全体を表示" onClick={fitView}>⤢</button>
       </div>
     </div>
   );
