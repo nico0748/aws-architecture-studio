@@ -7,7 +7,14 @@ import { svgToPng, timestamp } from '../raster';
 
 const hex = (c: string) => c.replace('#', '');
 
-export async function exportPptx(doc: DiagramDoc): Promise<string> {
+/**
+ * SVG 文字列を PNG の data URL に変換する関数。ブラウザは canvas、
+ * MCP サーバ側は resvg と、環境ごとに実装を差し替えるためのもの。
+ */
+export type Rasterize = (svg: string, size: number) => Promise<string | null>;
+
+/** スライドを組み立てて返す。書き出し方（ダウンロード / ファイル）は呼び出し側に任せる。 */
+export async function buildPptx(doc: DiagramDoc, svgToPng: Rasterize): Promise<PptxGenJS> {
   const pptx = new PptxGenJS();
   pptx.defineLayout({ name: 'W', width: 13.333, height: 7.5 });
   pptx.layout = 'W';
@@ -114,6 +121,11 @@ export async function exportPptx(doc: DiagramDoc): Promise<string> {
     slide.addText(n.label ?? '', { x: X(n.x + 42) - 0.6, y: Y(r.y + r.h + 2), w: 1.2, h: 0.34, fontSize: 7.5, color: '16202B', align: 'center', valign: 'top', wrap: true });
   }
 
+  return pptx;
+}
+
+export async function exportPptx(doc: DiagramDoc): Promise<string> {
+  const pptx = await buildPptx(doc, svgToPng);
   const fn = 'aws-architecture-' + timestamp() + '.pptx';
   await pptx.writeFile({ fileName: fn });
   return fn;
