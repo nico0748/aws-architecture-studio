@@ -1,26 +1,13 @@
 import { create } from 'zustand';
-import type {
-  DiagramDoc,
-  DiagramNode,
-  DiagramEdge,
-  NodeKind,
-  Selection,
-  FlowKey,
-  EdgeRouting,
-} from '../types';
-import { makeNode, snapVal, type NodeOpts } from '../lib/nodeFactory';
+import type { DiagramDoc, DiagramNode, DiagramEdge, NodeKind, Selection } from '../types';
+import type { NodeOpts } from '../lib/nodeFactory';
+import * as ops from '../lib/doc/ops';
+import type { EdgeOpts, ZOrder } from '../lib/doc/ops';
 
 interface View {
   zoom: number;
   panX: number;
   panY: number;
-}
-
-interface EdgeOpts {
-  label?: string;
-  flow?: FlowKey;
-  routing?: EdgeRouting;
-  arrow?: boolean;
 }
 
 interface StoreState {
@@ -55,16 +42,16 @@ interface StoreState {
   sendBackward: () => void;
   bringToFront: () => void;
   sendToBack: () => void;
+  reorder: (order: ZOrder) => void;
 
   // document ops
   setDoc: (doc: DiagramDoc, commit?: boolean) => void;
 }
 
-const emptyDoc = (): DiagramDoc => ({ nodes: [], edges: [], seq: 1 });
 const snapshot = (doc: DiagramDoc) => JSON.stringify(doc);
 
 export const useStore = create<StoreState>((set, get) => ({
-  doc: emptyDoc(),
+  doc: ops.emptyDoc(),
   sel: null,
   view: { zoom: 1, panX: 60, panY: 60 },
   snap: true,
@@ -116,142 +103,57 @@ export const useStore = create<StoreState>((set, get) => ({
   addNode: (kind, catId, x, y, opts) => {
     get().beginChange();
     const { doc, snap } = get();
-    const id = 'n' + doc.seq;
-    const center = kind === 'group';
-    const node = makeNode(id, kind, catId, snapVal(x, snap), snapVal(y, snap), opts, center);
-    if (center && node.w) {
-      node.x = snapVal(node.x, snap);
-      node.y = snapVal(node.y, snap);
-    }
-    set({
-      doc: { ...doc, nodes: [...doc.nodes, node], seq: doc.seq + 1 },
-      sel: { kind: 'node', id },
-    });
-    return id;
+    const res = ops.addNode(doc, { kind, catId, x, y, opts, snap });
+    set({ doc: res.doc, sel: { kind: 'node', id: res.node.id } });
+    return res.node.id;
   },
 
-  patchNode: (id, patch) =>
-    set((s) => ({
-      doc: {
-        ...s.doc,
-        nodes: s.doc.nodes.map((n) => (n.id === id ? { ...n, ...patch } : n)),
-      },
-    })),
+  patchNode: (id, patch) => set((s) => ({ doc: ops.patchNode(s.doc, id, patch) })),
 
-  moveNode: (id, x, y) =>
-    set((s) => ({
-      doc: {
-        ...s.doc,
-        nodes: s.doc.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)),
-      },
-    })),
+  moveNode: (id, x, y) => set((s) => ({ doc: ops.moveNode(s.doc, id, x, y) })),
 
   addEdge: (from, to, opts = {}) => {
-    const { doc } = get();
-    const flow = opts.flow ?? 'default';
-    if (doc.edges.some((e) => e.from === from && e.to === to && e.flow === flow)) return null;
+    const res = ops.addEdge(get().doc, from, to, opts);
+    if (!res) return null;
     get().beginChange();
-    const id = 'n' + doc.seq;
-    const edge: DiagramEdge = {
-      id,
-      from,
-      to,
-      label: opts.label ?? '',
-      flow,
-      routing: opts.routing ?? 'orthogonal',
-      arrow: opts.arrow !== false,
-    };
-    set((s) => ({ doc: { ...s.doc, edges: [...s.doc.edges, edge], seq: s.doc.seq + 1 }, sel: { kind: 'edge', id } }));
-    return id;
+    set({ doc: res.doc, sel: { kind: 'edge', id: res.edge.id } });
+    return res.edge.id;
   },
 
-  patchEdge: (id, patch) =>
-    set((s) => ({
-      doc: {
-        ...s.doc,
-        edges: s.doc.edges.map((e) => (e.id === id ? { ...e, ...patch } : e)),
-      },
-    })),
+  patchEdge: (id, patch) => set((s) => ({ doc: ops.patchEdge(s.doc, id, patch) })),
 
   deleteSelected: () => {
-    const { sel } = get();
+    const { sel, doc } = get();
     if (!sel) return;
     get().beginChange();
-    set((s) => {
-      if (sel.kind === 'node') {
-        return {
-          doc: {
-            ...s.doc,
-            nodes: s.doc.nodes.filter((n) => n.id !== sel.id),
-            edges: s.doc.edges.filter((e) => e.from !== sel.id && e.to !== sel.id),
-          },
-          sel: null,
-        };
-      }
-      return { doc: { ...s.doc, edges: s.doc.edges.filter((e) => e.id !== sel.id) }, sel: null };
-    });
+    set({ doc: sel.kind === 'node' ? ops.deleteNode(doc, sel.id) : ops.deleteEdge(doc, sel.id), sel: null });
   },
 
   duplicateSelected: () => {
     const { sel, doc, snap } = get();
     if (!sel || sel.kind !== 'node') return;
-    const n = doc.nodes.find((x) => x.id === sel.id);
-    if (!n) return;
+    const res = ops.duplicateNode(doc, sel.id, snap);
+    if (!res) return;
     get().beginChange();
-    const id = 'n' + doc.seq;
-    const copy: DiagramNode = { ...JSON.parse(JSON.stringify(n)), id, x: snapVal(n.x + 24, snap), y: snapVal(n.y + 24, snap) };
-    set((s) => ({ doc: { ...s.doc, nodes: [...s.doc.nodes, copy], seq: s.doc.seq + 1 }, sel: { kind: 'node', id } }));
+    set({ doc: res.doc, sel: { kind: 'node', id: res.node.id } });
   },
 
-  bringForward: () => {
-    const { sel, doc } = get();
-    if (!sel || sel.kind !== 'node') return;
-    const index = doc.nodes.findIndex((n) => n.id === sel.id);
-    if (index < 0 || index === doc.nodes.length - 1) return;
-    get().beginChange();
-    const nodes = [...doc.nodes];
-    [nodes[index], nodes[index + 1]] = [nodes[index + 1], nodes[index]];
-    set({ doc: { ...doc, nodes } });
-  },
+  bringForward: () => get().reorder('forward'),
+  sendBackward: () => get().reorder('backward'),
+  bringToFront: () => get().reorder('front'),
+  sendToBack: () => get().reorder('back'),
 
-  sendBackward: () => {
+  reorder: (order) => {
     const { sel, doc } = get();
     if (!sel || sel.kind !== 'node') return;
-    const index = doc.nodes.findIndex((n) => n.id === sel.id);
-    if (index <= 0) return;
+    const next = ops.reorderNode(doc, sel.id, order);
+    if (next === doc) return;
     get().beginChange();
-    const nodes = [...doc.nodes];
-    [nodes[index], nodes[index - 1]] = [nodes[index - 1], nodes[index]];
-    set({ doc: { ...doc, nodes } });
-  },
-
-  bringToFront: () => {
-    const { sel, doc } = get();
-    if (!sel || sel.kind !== 'node') return;
-    const index = doc.nodes.findIndex((n) => n.id === sel.id);
-    if (index < 0 || index === doc.nodes.length - 1) return;
-    get().beginChange();
-    const nodes = [...doc.nodes];
-    const [node] = nodes.splice(index, 1);
-    nodes.push(node);
-    set({ doc: { ...doc, nodes } });
-  },
-
-  sendToBack: () => {
-    const { sel, doc } = get();
-    if (!sel || sel.kind !== 'node') return;
-    const index = doc.nodes.findIndex((n) => n.id === sel.id);
-    if (index <= 0) return;
-    get().beginChange();
-    const nodes = [...doc.nodes];
-    const [node] = nodes.splice(index, 1);
-    nodes.unshift(node);
-    set({ doc: { ...doc, nodes } });
+    set({ doc: next });
   },
 
   setDoc: (doc, commit = true) => {
     if (commit) get().beginChange();
     set({ doc, sel: null });
   },
-
 }));

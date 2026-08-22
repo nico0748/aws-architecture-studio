@@ -9,17 +9,26 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "build:logos": "node scripts/build-logos.mjs",
+    "build:mcp": "esbuild mcp/stdio.ts mcp/http.ts --bundle --platform=node --format=esm --target=node18 --packages=external --outdir=mcp/dist",
+    "mcp": "node mcp/dist/stdio.js",
+    "mcp:http": "node mcp/dist/http.js",
+    "test:mcp": "node mcp/smoke-test.mjs",
+    "typecheck": "tsc --noEmit && tsc -p mcp/tsconfig.json",
     "lint": "eslint . --ext ts,tsx"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@resvg/resvg-js": "^2.6.2",
     "js-yaml": "^4.1.0",
     "pptxgenjs": "^3.12.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "zod": "^4.4.3",
     "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.20.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
