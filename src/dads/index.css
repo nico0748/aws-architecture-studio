@@ -1,0 +1,14 @@
+/* デジタル庁デザインシステム (DADS) v2 — 公式 HTML 実装から取り込んだトークンとコンポーネント。
+   取り込み元と更新手順は src/dads/README.md を参照。 */
+@import './global.css';
+@import './button.css';
+@import './input-text.css';
+@import './textarea.css';
+@import './select.css';
+@import './checkbox.css';
+@import './radio.css';
+@import './form-control-label.css';
+@import './menu-list.css';
+@import './menu-list-box.css';
+@import './modal-dialog.css';
+@import './divider.css';

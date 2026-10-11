@@ -15,6 +15,7 @@ AWS のインフラ構成図をブラウザ上で作成し、**PowerPoint (.pptx
 - **Undo/Redo**、グリッド吸着、複製（Ctrl+D）、パン & ズーム
 - **プロジェクトの保存・復元**（JSON ファイル／JSON テキスト）
 - **MCP サーバ**（Claude から図の作成・編集・書き出しと、構成図のセキュリティ点検ができる）
+- UI は**デジタル庁デザインシステム (DADS)** の公式コンポーネントとデザイントークンで構成（[src/dads/README.md](src/dads/README.md)）
 - 依存ライブラリはバンドルされるため、ビルド後は**オフラインでも動作**
 
 ## セットアップ
@@ -35,7 +36,7 @@ Node.js 18 以上を推奨します。
 ## 使い方
 
 1. 左パレットからキャンバスへ**ドラッグ**（ダブルクリックでも配置）。
-2. ノードの**オレンジ丸**から別ノードへドラッグして**接続**。
+2. ノードの右上にある**青い接続点**から別ノードへドラッグして**接続**。
 3. 接続を選択し、右パネルで**フロー種別（色）・ラベル・配線**を設定。
 4. 「追加」からセクション枠・テキスト・凡例を追加。
 5. 「書き出す」から **PowerPoint / SVG / PNG** を出力。
@@ -66,7 +67,8 @@ src/
 ├─ main.tsx                # エントリ
 ├─ App.tsx                 # レイアウト・キーボード操作
 ├─ types.ts                # ドメイン型
-├─ styles.css              # スタイル
+├─ styles.css              # アプリ固有のレイアウト（DADS トークンのみ参照）
+├─ dads/                   # デジタル庁デザインシステムの公式 CSS（無改変・MIT）
 ├─ data/
 │  ├─ catalog.json         # アイコンカタログ（AWS公式SVG + ロゴ/アクター）
 │  ├─ catalog.ts           # カタログ索引・IaCマッピング
@@ -86,6 +88,7 @@ src/
 └─ components/
    ├─ Toolbar.tsx  Palette.tsx  Canvas.tsx
    ├─ NodeView.tsx  Edges.tsx  PropertiesPanel.tsx  Toast.tsx
+   ├─ ui/dads.tsx          # DADS 部品の薄い React ラッパー
    └─ modals/{ImportModal,ProjectModal}.tsx
 
 mcp/                       # MCP サーバ（Web ビルドには含まれない）

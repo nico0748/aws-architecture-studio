@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore';
 import { exportProject } from '../../lib/export/project';
 import { fitView } from '../../lib/viewport';
 import type { DiagramDoc } from '../../types';
+import { ModalDialog } from '../ui/dads';
 
 export function ProjectModal({ onClose }: { onClose: () => void }) {
   const doc = useStore((s) => s.doc);
@@ -45,21 +46,27 @@ export function ProjectModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="modal-bg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <h3>プロジェクト</h3>
-        <div className="mbody">
-          <div className="hint">ファイルで保存するか、JSONテキストを貼り付けて既存のプロジェクトを復元できます。</div>
-          <label className="sr-only" htmlFor="project-json">プロジェクト JSON</label>
-          <textarea id="project-json" value={text} onChange={(e) => setText(e.target.value)} />
-        </div>
-        <div className="mfoot">
-          <button className="tbtn ghost" style={{ color: '#333' }} onClick={onClose}>閉じる</button>
-          <button className="tbtn ghost" style={{ color: '#333' }} onClick={restore}>復元</button>
-          <button className="tbtn ghost" style={{ color: '#333' }} onClick={copy}>コピー</button>
-          <button className="tbtn primary" onClick={save}>保存</button>
-        </div>
+    <ModalDialog
+      title="プロジェクト"
+      onClose={onClose}
+      actions={
+        <>
+          <button className="dads-button" type="button" data-type="text" data-size="md" onClick={copy}>コピー</button>
+          <span className="spacer" />
+          <button className="dads-button" type="button" data-type="outline" data-size="md" onClick={restore}>復元</button>
+          <button className="dads-button" type="button" data-type="solid-fill" data-size="md" onClick={save}>ファイルに保存</button>
+        </>
+      }
+    >
+      <div className="dads-form-control-label field" data-size="sm">
+        <label className="dads-form-control-label__label" htmlFor="project-json">プロジェクト JSON</label>
+        <p id="project-json-support" className="dads-form-control-label__support-text">
+          ファイルとして保存するか、JSON テキストを貼り付けて既存のプロジェクトを復元できます。
+        </p>
+        <span className="dads-textarea">
+          <textarea id="project-json" className="dads-textarea__textarea code-textarea" aria-describedby="project-json-support" value={text} onChange={(e) => setText(e.target.value)} />
+        </span>
       </div>
-    </div>
+    </ModalDialog>
   );
 }

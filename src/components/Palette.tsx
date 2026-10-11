@@ -3,6 +3,7 @@ import { CATALOG } from '../data/catalog';
 import { useStore } from '../store/useStore';
 import { viewCenterWorld } from '../lib/viewport';
 import type { NodeKind } from '../types';
+import { CloseIcon } from './ui/dads';
 
 interface PItem {
   kind: NodeKind;
@@ -32,17 +33,30 @@ function CategoryBlock({
   const open = forceOpen || !collapsed;
   return (
     <section className="palette-category">
-      <button className={'pcat' + (open ? '' : ' collapsed')} onClick={() => setCollapsed((v) => !v)} aria-expanded={open}>
-        <span className="chev" aria-hidden="true">{open ? '−' : '+'}</span>
-        <span>{name}</span>
-        <span className="category-count">{items.length}</span>
-      </button>
+      <h3 className="pcat-heading">
+        <button
+          className="dads-menu-list__item pcat"
+          type="button"
+          data-type="box"
+          data-size="small"
+          data-expanded={open ? '' : undefined}
+          aria-expanded={open}
+          onClick={() => setCollapsed((v) => !v)}
+        >
+          <span className="dads-menu-list__label">{name}</span>
+          <span className="category-count">{items.length}<span className="dads-u-visually-hidden"> 件</span></span>
+          <svg className="dads-menu-list__end-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentcolor" aria-hidden="true">
+            <path d="m20.5 6.6-8 8-8-8L3.1 8l9.4 9.4L21.9 8l-1.4-1.4Z" />
+          </svg>
+        </button>
+      </h3>
       {open && (
         <div className="pgrid">
           {items.map((it) => (
             <div
               key={it.kind + it.id}
               className="pitem"
+              title={it.label}
               draggable
               onDragStart={(e) => {
                 e.dataTransfer.setData('text/plain', JSON.stringify({ kind: it.kind, id: it.id }));
@@ -100,32 +114,45 @@ export function Palette({ onClose }: { onClose: () => void }) {
   }, [filter]);
 
   return (
-    <aside id="palette" className="sidebar sidebar-left" aria-label="コンポーネント">
-      <div className="palette-head">
-        <div>
-          <p className="eyebrow">コンポーネント</p>
-          <h2>サービスを追加</h2>
-        </div>
-        <div className="sidebar-head-actions">
-          <span className="palette-tip" title="ドラッグまたはダブルクリックで配置">?</span>
-          <button className="sidebar-close" type="button" onClick={onClose} aria-label="コンポーネントを閉じる">×</button>
-        </div>
+    <aside id="palette" className="sidebar sidebar-left" aria-label="素材">
+      <div className="panel-head">
+        <h2 className="panel-title">素材を追加</h2>
+        <button className="dads-button panel-close" type="button" data-type="text" data-size="xs" onClick={onClose}>
+          <CloseIcon className="dads-button__icon" />
+          閉じる
+        </button>
       </div>
       <div className="psearch">
-        <label className="sr-only" htmlFor="palette-search">サービスを検索</label>
-        <input
-          id="palette-search"
-          className="s"
-          type="text"
-          placeholder="サービスを検索 (例: EC2, VPC)"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
-        {filter && <button className="clear-search" aria-label="検索をクリア" onClick={() => setFilter('')}>×</button>}
+        <label className="dads-u-visually-hidden" htmlFor="palette-search">サービスを検索</label>
+        <span className="dads-input-text search-field">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m21 20.5-6-6a7.4 7.4 0 0 0 1.9-5A7.4 7.4 0 0 0 9.5 2 7.5 7.5 0 1 0 14 15.5l6 6 1-1ZM3.5 9.5a6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6 6 6 0 0 1-6-6Z" fill="currentcolor" />
+          </svg>
+          <input
+            id="palette-search"
+            className="dads-input-text__input"
+            data-size="sm"
+            type="search"
+            placeholder="例: EC2, VPC"
+            aria-describedby="palette-guide"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        </span>
+        {filter && (
+          <button className="dads-button clear-search" type="button" data-type="text" data-size="xs" onClick={() => setFilter('')}>
+            クリア
+          </button>
+        )}
       </div>
-      <p className="palette-guide">ドラッグ、またはダブルクリックでキャンバスへ追加</p>
+      <p id="palette-guide" className="palette-guide">ドラッグ、またはダブルクリックでキャンバスへ追加できます。</p>
       <div className="plist">
-        {blocks.length === 0 && <div className="empty search-empty"><b>見つかりませんでした</b><br />別のサービス名や英字で検索してください。</div>}
+        {blocks.length === 0 && (
+          <div className="empty search-empty" role="status">
+            <p className="empty-title">見つかりませんでした</p>
+            <p>別のサービス名や英字で検索してください。</p>
+          </div>
+        )}
         {blocks.map((b) => (
           <CategoryBlock key={b.name} name={b.name} items={b.items} defaultCollapsed={b.collapsed} forceOpen={!!filter.trim()} />
         ))}

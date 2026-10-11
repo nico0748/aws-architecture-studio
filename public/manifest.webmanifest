@@ -4,8 +4,8 @@
   "description": "AWS インフラ構成図を作成・書き出しできるブラウザアプリケーション",
   "lang": "ja",
   "display": "standalone",
-  "background_color": "#eef1f5",
-  "theme_color": "#232f3e",
+  "background_color": "#f2f2f2",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "/architecture-studio.svg",
