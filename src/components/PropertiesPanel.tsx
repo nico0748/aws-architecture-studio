@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import { FLOWS, FLOW_KEYS } from '../data/flows';
 import { svcById, shpById, grpById } from '../data/catalog';
 import type { DiagramEdge, DiagramNode, FlowKey } from '../types';
+import { Checkbox, CloseIcon, Field, Select, TextArea, TextInput } from './ui/dads';
 
 export function PropertiesPanel({ onClose }: { onClose: () => void }) {
   const sel = useStore((s) => s.sel);
@@ -26,19 +27,23 @@ export function PropertiesPanel({ onClose }: { onClose: () => void }) {
 
   if (!sel) {
     body = (
-      <div className="empty empty-state">
-        <div className="empty-icon">⌘</div>
-        <h3>選択した要素を編集</h3>
-        <p>キャンバス上の要素や接続線を選択すると、ここで内容を変更できます。</p>
+      <div className="empty-state">
+        <p className="empty-title">選択した要素をここで編集します</p>
+        <p>キャンバス上の要素や接続線を選択すると、ラベルや色などを変更できます。</p>
         <div className="quick-start">
-          <p className="eyebrow">はじめ方</p>
+          <h3 className="quick-start-title">はじめ方</h3>
           <ol>
-            <li><b>左の一覧</b>からサービスを追加</li>
-            <li><b>オレンジの接続点</b>をドラッグして配線</li>
-            <li>接続線を選び、<b>フロー種別</b>を設定</li>
+            <li>左の<b>素材</b>からサービスを追加します。</li>
+            <li>要素の右上にある<b>青い接続点</b>をドラッグして配線します。</li>
+            <li>接続線を選び、<b>フロー種別</b>を設定します。</li>
           </ol>
         </div>
-        <p className="shortcut-hint">⌘/Ctrl + D 複製　·　Delete 削除　·　⌘/Ctrl + Z 元に戻す</p>
+        <h3 className="quick-start-title">ショートカット</h3>
+        <dl className="shortcut-list">
+          <div><dt>⌘/Ctrl + D</dt><dd>複製</dd></div>
+          <div><dt>Delete</dt><dd>削除</dd></div>
+          <div><dt>⌘/Ctrl + Z</dt><dd>元に戻す</dd></div>
+        </dl>
       </div>
     );
   } else if (sel.kind === 'edge') {
@@ -66,13 +71,13 @@ export function PropertiesPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <aside id="props" className="sidebar sidebar-right" aria-label="インスペクター">
-      <div className="ph">
-        <div>
-          <span className="eyebrow">インスペクター</span>
-          <div className="panel-title">{head}</div>
-        </div>
-        <button className="sidebar-close" type="button" onClick={onClose} aria-label="インスペクターを閉じる">×</button>
+    <aside id="props" className="sidebar sidebar-right" aria-label="プロパティ">
+      <div className="panel-head">
+        <h2 className="panel-title">{head}</h2>
+        <button className="dads-button panel-close" type="button" data-type="text" data-size="xs" onClick={onClose}>
+          <CloseIcon className="dads-button__icon" />
+          閉じる
+        </button>
       </div>
       <div className="pbody">{body}</div>
     </aside>
@@ -88,9 +93,18 @@ type PatchNode = (id: string, patch: Partial<DiagramNode>) => void;
 
 function DeleteBtn({ onDelete, label = '削除' }: { onDelete: () => void; label?: string }) {
   return (
-    <button className="danger" onClick={onDelete}>
+    <button className="dads-button danger-button" type="button" data-type="outline" data-size="sm" onClick={onDelete}>
       {label}
     </button>
+  );
+}
+
+function KindRow({ value }: { value: string | undefined }) {
+  return (
+    <dl className="kind-row">
+      <dt>種別</dt>
+      <dd>{value}</dd>
+    </dl>
   );
 }
 
@@ -98,14 +112,10 @@ function IconProps({ n, patchNode, startField, commitOnce, onDelete }: Common & 
   const meta = n.kind === 'service' ? svcById[n.catId!] : shpById[n.catId!];
   return (
     <>
-      <div className="fld">
-        <label>種別</label>
-        <div style={{ fontSize: 12.5, color: '#33404d' }}>{meta?.label ?? n.catId}</div>
-      </div>
-      <div className="fld">
-        <label>ラベル</label>
-        <input type="text" value={n.label ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { label: e.target.value }); }} />
-      </div>
+      <KindRow value={meta?.label ?? n.catId} />
+      <Field label="ラベル">
+        {(id) => <TextInput id={id} type="text" value={n.label ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { label: e.target.value }); }} />}
+      </Field>
       <DeleteBtn onDelete={onDelete} />
     </>
   );
@@ -115,41 +125,30 @@ function GroupProps({ n, patchNode, startField, commitOnce, onDelete }: Common &
   const g = n.catId ? grpById[n.catId] : undefined;
   return (
     <>
-      <div className="fld">
-        <label>種別</label>
-        <div style={{ fontSize: 12.5, color: '#33404d' }}>{g?.label ?? n.catId}</div>
+      <KindRow value={g?.label ?? n.catId} />
+      <Field label="タイトル">
+        {(id) => <TextInput id={id} type="text" value={n.label ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { label: e.target.value }); }} />}
+      </Field>
+      <Field label="説明文（任意）">
+        {(id) => <TextArea id={id} rows={2} value={n.subtitle ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { subtitle: e.target.value }); }} />}
+      </Field>
+      <div className="field-row">
+        <Field label="幅">
+          {(id) => <TextInput id={id} type="number" inputMode="numeric" value={n.w ?? 0} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { w: Math.max(70, parseInt(e.target.value) || n.w!) }); }} />}
+        </Field>
+        <Field label="高さ">
+          {(id) => <TextInput id={id} type="number" inputMode="numeric" value={n.h ?? 0} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { h: Math.max(56, parseInt(e.target.value) || n.h!) }); }} />}
+        </Field>
       </div>
-      <div className="fld">
-        <label>タイトル</label>
-        <input type="text" value={n.label ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { label: e.target.value }); }} />
+      <div className="field-row">
+        <Field label="枠の色">
+          {(id) => <TextInput id={id} type="text" value={n.color ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { color: e.target.value }); }} />}
+        </Field>
+        <Field label="塗り（任意）">
+          {(id) => <TextInput id={id} type="text" value={n.fill ?? ''} placeholder="#EAF6E1" onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { fill: e.target.value.trim() || null }); }} />}
+        </Field>
       </div>
-      <div className="fld">
-        <label>説明文（サブタイトル・任意）</label>
-        <textarea rows={2} value={n.subtitle ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { subtitle: e.target.value }); }} />
-      </div>
-      <div className="fld row">
-        <div>
-          <label>幅</label>
-          <input type="number" value={n.w ?? 0} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { w: Math.max(70, parseInt(e.target.value) || n.w!) }); }} />
-        </div>
-        <div>
-          <label>高さ</label>
-          <input type="number" value={n.h ?? 0} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { h: Math.max(56, parseInt(e.target.value) || n.h!) }); }} />
-        </div>
-      </div>
-      <div className="fld row">
-        <div>
-          <label>枠の色</label>
-          <input type="text" value={n.color ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { color: e.target.value }); }} />
-        </div>
-        <div>
-          <label>塗り(任意)</label>
-          <input type="text" value={n.fill ?? ''} placeholder="#EAF6E1 / 空欄" onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { fill: e.target.value.trim() || null }); }} />
-        </div>
-      </div>
-      <label className="chk">
-        <input type="checkbox" checked={!!n.dashed} onChange={(e) => { commitOnce(); patchNode(n.id, { dashed: e.target.checked }); }} onFocus={startField} /> 点線の枠
-      </label>
+      <Checkbox label="点線の枠" checked={!!n.dashed} onChange={(e) => { commitOnce(); patchNode(n.id, { dashed: e.target.checked }); }} onFocus={startField} />
       <DeleteBtn onDelete={onDelete} />
     </>
   );
@@ -158,43 +157,42 @@ function GroupProps({ n, patchNode, startField, commitOnce, onDelete }: Common &
 function TextProps({ n, patchNode, startField, commitOnce, onDelete }: Common & { n: DiagramNode; patchNode: PatchNode }) {
   return (
     <>
-      <div className="fld">
-        <label>本文</label>
-        <textarea rows={3} value={n.text ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { text: e.target.value }); }} />
+      <Field label="本文">
+        {(id) => <TextArea id={id} rows={3} value={n.text ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { text: e.target.value }); }} />}
+      </Field>
+      <div className="field-row">
+        <Field label="文字サイズ">
+          {(id) => <TextInput id={id} type="number" inputMode="numeric" value={n.fontSize ?? 14} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { fontSize: Math.max(8, parseInt(e.target.value) || n.fontSize!) }); }} />}
+        </Field>
+        <Field label="幅">
+          {(id) => <TextInput id={id} type="number" inputMode="numeric" value={n.w ?? 160} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { w: Math.max(24, parseInt(e.target.value) || n.w!) }); }} />}
+        </Field>
       </div>
-      <div className="fld row">
-        <div>
-          <label>文字サイズ</label>
-          <input type="number" value={n.fontSize ?? 14} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { fontSize: Math.max(8, parseInt(e.target.value) || n.fontSize!) }); }} />
-        </div>
-        <div>
-          <label>幅</label>
-          <input type="number" value={n.w ?? 160} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { w: Math.max(24, parseInt(e.target.value) || n.w!) }); }} />
-        </div>
+      <div className="field-row">
+        <Field label="文字色">
+          {(id) => <TextInput id={id} type="text" value={n.textColor ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { textColor: e.target.value }); }} />}
+        </Field>
+        <Field label="揃え">
+          {(id) => (
+            <Select id={id} value={n.align ?? 'left'} onChange={(e) => { commitOnce(); patchNode(n.id, { align: e.target.value as DiagramNode['align'] }); }} onFocus={startField}>
+              <option value="left">左</option>
+              <option value="center">中央</option>
+              <option value="right">右</option>
+            </Select>
+          )}
+        </Field>
       </div>
-      <div className="fld row">
-        <div>
-          <label>文字色</label>
-          <input type="text" value={n.textColor ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { textColor: e.target.value }); }} />
-        </div>
-        <div>
-          <label>揃え</label>
-          <select value={n.align ?? 'left'} onChange={(e) => { commitOnce(); patchNode(n.id, { align: e.target.value as DiagramNode['align'] }); }} onFocus={startField}>
-            <option value="left">左</option>
-            <option value="center">中央</option>
-            <option value="right">右</option>
-          </select>
-        </div>
+      <div className="check-group">
+        <Checkbox label="太字" checked={!!n.bold} onChange={(e) => { commitOnce(); patchNode(n.id, { bold: e.target.checked }); }} onFocus={startField} />
+        <Checkbox label="背景ボックス" checked={!!n.boxed} onChange={(e) => { commitOnce(); patchNode(n.id, { boxed: e.target.checked }); }} onFocus={startField} />
       </div>
-      <label className="chk">
-        <input type="checkbox" checked={!!n.bold} onChange={(e) => { commitOnce(); patchNode(n.id, { bold: e.target.checked }); }} onFocus={startField} /> 太字
-      </label>
-      <label className="chk">
-        <input type="checkbox" checked={!!n.boxed} onChange={(e) => { commitOnce(); patchNode(n.id, { boxed: e.target.checked }); }} onFocus={startField} /> 背景ボックス
-      </label>
       <DeleteBtn onDelete={onDelete} />
     </>
   );
+}
+
+function FlowSwatch({ color, dash }: { color: string; dash?: boolean }) {
+  return <span className="flow-swatch" style={{ borderTopColor: color, borderTopStyle: dash ? 'dashed' : 'solid' }} aria-hidden="true" />;
 }
 
 function LegendProps({ n, patchNode, beginChange, startField, commitOnce, onDelete }: Common & { n: DiagramNode; patchNode: PatchNode; beginChange: () => void }) {
@@ -207,26 +205,21 @@ function LegendProps({ n, patchNode, beginChange, startField, commitOnce, onDele
   };
   return (
     <>
-      <div className="fld">
-        <label>タイトル</label>
-        <input type="text" value={n.title ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { title: e.target.value }); }} />
-      </div>
-      <div className="fld">
-        <label>表示するフロー</label>
-        {FLOW_KEYS.map((k) => {
-          const f = FLOWS[k];
-          return (
-            <label className="chk" key={k}>
-              <input type="checkbox" checked={(n.flows ?? []).includes(k)} onChange={() => toggle(k)} />
-              <span style={{ display: 'inline-block', width: 26, borderTop: `3px ${f.dash ? 'dashed' : 'solid'} ${f.color}` }} /> {f.label}
-            </label>
-          );
-        })}
-      </div>
-      <div className="fld">
-        <label>幅</label>
-        <input type="number" value={n.w ?? 210} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { w: Math.max(120, parseInt(e.target.value) || n.w!) }); }} />
-      </div>
+      <Field label="タイトル">
+        {(id) => <TextInput id={id} type="text" value={n.title ?? ''} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { title: e.target.value }); }} />}
+      </Field>
+      <fieldset className="dads-form-control-label field" data-size="sm">
+        <legend className="dads-form-control-label__label">表示するフロー</legend>
+        <div className="check-group">
+          {FLOW_KEYS.map((k) => {
+            const f = FLOWS[k];
+            return <Checkbox key={k} label={<><FlowSwatch color={f.color} dash={f.dash} />{f.label}</>} checked={(n.flows ?? []).includes(k)} onChange={() => toggle(k)} />;
+          })}
+        </div>
+      </fieldset>
+      <Field label="幅">
+        {(id) => <TextInput id={id} type="number" inputMode="numeric" value={n.w ?? 210} onFocus={startField} onChange={(e) => { commitOnce(); patchNode(n.id, { w: Math.max(120, parseInt(e.target.value) || n.w!) }); }} />}
+      </Field>
       <DeleteBtn onDelete={onDelete} />
     </>
   );
@@ -235,43 +228,42 @@ function LegendProps({ n, patchNode, beginChange, startField, commitOnce, onDele
 function EdgeProps({ e, patchEdge, beginChange, startField, commitOnce, onDelete }: Common & { e: DiagramEdge; patchEdge: (id: string, patch: Partial<DiagramEdge>) => void; beginChange: () => void }) {
   return (
     <>
-      <div className="fld">
-        <label>フロー種別（色）</label>
+      <fieldset className="dads-form-control-label field" data-size="sm">
+        <legend className="dads-form-control-label__label">フロー種別（色）</legend>
         <div className="flowsel">
           {FLOW_KEYS.map((k) => {
             const f = FLOWS[k];
             return (
-              <div
-                key={k}
-                className={'flowopt' + (e.flow === k ? ' on' : '')}
-                onClick={() => { beginChange(); patchEdge(e.id, { flow: k }); }}
-              >
-                <span className="sw" style={{ borderTopColor: f.color, borderTopStyle: f.dash ? 'dashed' : 'solid' }} />
+              <label key={k} className={'flowopt' + (e.flow === k ? ' on' : '')}>
+                <input
+                  className="dads-u-visually-hidden"
+                  type="radio"
+                  name={'flow-' + e.id}
+                  checked={e.flow === k}
+                  onChange={() => { beginChange(); patchEdge(e.id, { flow: k }); }}
+                />
+                <FlowSwatch color={f.color} dash={f.dash} />
                 {f.label}
-              </div>
+              </label>
             );
           })}
         </div>
-      </div>
-      <div className="fld">
-        <label>ラベル</label>
-        <input type="text" value={e.label} placeholder="例: /predict, RunTask" onFocus={startField} onChange={(ev) => { commitOnce(); patchEdge(e.id, { label: ev.target.value }); }} />
-      </div>
-      <div className="fld">
-        <label>配線</label>
-        <select value={e.routing} onChange={(ev) => { beginChange(); patchEdge(e.id, { routing: ev.target.value as DiagramEdge['routing'] }); }}>
-          <option value="orthogonal">直角（オルソゴナル）</option>
-          <option value="straight">直線</option>
-        </select>
-      </div>
-      <label className="chk">
-        <input type="checkbox" checked={e.arrow} onChange={(ev) => { beginChange(); patchEdge(e.id, { arrow: ev.target.checked }); }} /> 矢印を表示
-      </label>
-      <div className="fld">
-        <button className="tbtn ghost" style={{ color: '#333', border: '1px solid #ccc' }} onClick={() => { beginChange(); patchEdge(e.id, { from: e.to, to: e.from }); }}>
-          ↔ 始点と終点を入れ替え
-        </button>
-      </div>
+      </fieldset>
+      <Field label="ラベル">
+        {(id) => <TextInput id={id} type="text" value={e.label} placeholder="例: /predict, RunTask" onFocus={startField} onChange={(ev) => { commitOnce(); patchEdge(e.id, { label: ev.target.value }); }} />}
+      </Field>
+      <Field label="配線">
+        {(id) => (
+          <Select id={id} value={e.routing} onChange={(ev) => { beginChange(); patchEdge(e.id, { routing: ev.target.value as DiagramEdge['routing'] }); }}>
+            <option value="orthogonal">直角（オルソゴナル）</option>
+            <option value="straight">直線</option>
+          </Select>
+        )}
+      </Field>
+      <Checkbox label="矢印を表示" checked={e.arrow} onChange={(ev) => { beginChange(); patchEdge(e.id, { arrow: ev.target.checked }); }} />
+      <button className="dads-button swap-button" type="button" data-type="outline" data-size="sm" onClick={() => { beginChange(); patchEdge(e.id, { from: e.to, to: e.from }); }}>
+        始点と終点を入れ替え
+      </button>
       <DeleteBtn onDelete={onDelete} label="この接続を削除" />
     </>
   );

@@ -6,6 +6,7 @@ import { buildSample } from '../lib/docBuilder';
 import { exportPptx } from '../lib/export/pptx';
 import { exportSvg } from '../lib/export/svg';
 import { exportPng } from '../lib/export/png';
+import { Checkbox, MenuItem, MenuListBox } from './ui/dads';
 
 type IconName = 'add' | 'import' | 'template' | 'layers' | 'grid' | 'components' | 'properties' | 'data' | 'export' | 'undo' | 'redo' | 'tools';
 
@@ -27,37 +28,10 @@ function Icon({ name }: { name: IconName }) {
   return <svg className="ui-icon" viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
 
-function Dropdown({ label, primary, children }: { label: React.ReactNode; primary?: boolean; children: (close: () => void) => React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    window.addEventListener('click', onDoc);
-    return () => window.removeEventListener('click', onDoc);
-  }, [open]);
+function ToolGroup({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="menu" ref={ref}>
-      <button
-        className={'tbtn ' + (primary ? 'primary' : 'ghost')}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-      >
-        {label}
-      </button>
-      {open && <div className={'menu-pop' + (primary ? ' right' : '')} role="menu">{children(() => setOpen(false))}</div>}
-    </div>
-  );
-}
-
-function RibbonGroup({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={'ribbon-group ' + className}>
-      <div className="ribbon-actions">{children}</div>
-      <span className="ribbon-label">{label}</span>
+    <div className={'tool-group ' + className} role="group" aria-label={label}>
+      {children}
     </div>
   );
 }
@@ -142,81 +116,115 @@ export function Toolbar({ onOpenModal, paletteOpen, inspectorOpen, onTogglePalet
     <div className="app-header">
       <header className="primary-header">
         <div className="logo">
-          <img className="brand-mark" src="/architecture-studio.svg" alt="" />
-          <span className="brand-lockup"><span className="brand-aws">AWS</span><span className="brand-name">Architecture Studio</span></span>
-          <span className="beta">Diagram editor</span>
+          <img className="brand-mark" src="/architecture-studio.svg" alt="" width="40" height="40" />
+          <h1 className="brand-name">
+            <span className="brand-aws">AWS</span> Architecture Studio
+          </h1>
         </div>
         <div className="spacer" />
-        <RibbonGroup label="編集" className="history">
-          <button className="tbtn ghost" title="元に戻す (⌘/Ctrl + Z)" disabled={!canUndo} onClick={undo}><Icon name="undo" />戻す</button>
-          <button className="tbtn ghost" title="やり直し (⌘/Ctrl + Shift + Z)" disabled={!canRedo} onClick={redo}><Icon name="redo" />やり直す</button>
-        </RibbonGroup>
-        <RibbonGroup label="追加">
-          <Dropdown label={<><Icon name="add" />追加</>}>
+        <ToolGroup label="編集" className="history">
+          <button className="dads-button tbtn" type="button" data-type="text" data-size="sm" title="元に戻す (⌘/Ctrl + Z)" disabled={!canUndo} onClick={undo}><Icon name="undo" /><span className="tbtn-label">戻す</span></button>
+          <button className="dads-button tbtn" type="button" data-type="text" data-size="sm" title="やり直し (⌘/Ctrl + Shift + Z)" disabled={!canRedo} onClick={redo}><Icon name="redo" /><span className="tbtn-label">やり直す</span></button>
+        </ToolGroup>
+        <ToolGroup label="追加">
+          <MenuListBox label="追加" icon={<Icon name="add" />}>
             {(close) => (
               <>
-                <button role="menuitem" onClick={() => { insert('section'); close(); }}><span className="menu-icon">▧</span>セクション枠 <small>説明を添える</small></button>
-                <button role="menuitem" onClick={() => { insert('text'); close(); }}><span className="menu-icon">T</span>テキスト <small>補足を追加</small></button>
-                <button role="menuitem" onClick={() => { insert('legend'); close(); }}><span className="menu-icon">☷</span>データフロー凡例 <small>色の意味を表示</small></button>
+                <MenuItem icon="▧" label="セクション枠" hint="説明を添える" onSelect={() => { insert('section'); close(); }} />
+                <MenuItem icon="T" label="テキスト" hint="補足を追加" onSelect={() => { insert('text'); close(); }} />
+                <MenuItem icon="☷" label="データフロー凡例" hint="色の意味を表示" onSelect={() => { insert('legend'); close(); }} />
               </>
             )}
-          </Dropdown>
-        </RibbonGroup>
-        <RibbonGroup label="操作" className="tools-group">
-          <button className={'tbtn ghost tools-toggle' + (toolsOpen ? ' active' : '')} aria-expanded={toolsOpen} onClick={() => setToolsOpen((open) => !open)}>
-            <Icon name="tools" />操作
+          </MenuListBox>
+        </ToolGroup>
+        <ToolGroup label="表示" className="view-group">
+          <button className="dads-button tbtn tools-toggle" type="button" data-type="outline" data-size="sm" aria-expanded={toolsOpen} onClick={() => setToolsOpen((open) => !open)}>
+            <Icon name="tools" /><span className="tbtn-label">操作</span>
           </button>
-        </RibbonGroup>
-        <RibbonGroup label="表示" className="view-group">
-          <button className={'tbtn ghost sidebar-toggle' + (paletteOpen ? ' active' : '')} data-sidebar-toggle aria-label="コンポーネントを表示・非表示" aria-pressed={paletteOpen} onClick={onTogglePalette}>
-            <Icon name="components" /> 素材
+          <button className="dads-button tbtn sidebar-toggle" type="button" data-type="outline" data-size="sm" data-sidebar-toggle aria-label="素材パネルを表示・非表示" aria-pressed={paletteOpen} onClick={onTogglePalette}>
+            <Icon name="components" /><span className="tbtn-label">素材</span>
           </button>
-          <button className={'tbtn ghost sidebar-toggle' + (inspectorOpen ? ' active' : '')} data-sidebar-toggle aria-label="インスペクターを表示・非表示" aria-pressed={inspectorOpen} onClick={onToggleInspector}>
-            <Icon name="properties" /> プロパティ
+          <button className="dads-button tbtn sidebar-toggle" type="button" data-type="outline" data-size="sm" data-sidebar-toggle aria-label="プロパティパネルを表示・非表示" aria-pressed={inspectorOpen} onClick={onToggleInspector}>
+            <Icon name="properties" /><span className="tbtn-label">プロパティ</span>
           </button>
-        </RibbonGroup>
-        <RibbonGroup label="出力" className="output-group">
-          <Dropdown label={<><Icon name="export" />書き出す</>} primary>
-            {(close) => (
-              <>
-                <button role="menuitem" onClick={() => { void runExport('pptx'); close(); }}><span className="menu-icon">P</span>PowerPoint <small>.pptx</small></button>
-                <button role="menuitem" onClick={() => { void runExport('svg'); close(); }}><span className="menu-icon">◇</span>ベクター画像 <small>.svg</small></button>
-                <button role="menuitem" onClick={() => { void runExport('png'); close(); }}><span className="menu-icon">▣</span>画像 <small>.png</small></button>
-              </>
-            )}
-          </Dropdown>
-        </RibbonGroup>
+        </ToolGroup>
+        <ToolGroup label="出力" className="output-group">
+          <ExportMenu onExport={runExport} />
+        </ToolGroup>
       </header>
       {toolsOpen && (
-        <header className="tools-header" aria-label="追加操作">
-          <RibbonGroup label="作成">
-            <button className="tbtn ghost" onClick={() => onOpenModal('import')}><Icon name="import" />インポート</button>
-            <button className="tbtn ghost" onClick={loadSample}><Icon name="template" />テンプレート</button>
-          </RibbonGroup>
-          <RibbonGroup label="配置" className="arrange-group">
-            <Dropdown label={<><Icon name="layers" />レイヤー</>}>
+        <div className="tools-header" role="toolbar" aria-label="追加操作">
+          <ToolGroup label="作成">
+            <button className="dads-button tbtn" type="button" data-type="outline" data-size="sm" onClick={() => onOpenModal('import')}><Icon name="import" />インポート</button>
+            <button className="dads-button tbtn" type="button" data-type="outline" data-size="sm" onClick={loadSample}><Icon name="template" />テンプレート</button>
+          </ToolGroup>
+          <ToolGroup label="配置" className="arrange-group">
+            <MenuListBox label="レイヤー" icon={<Icon name="layers" />}>
               {(close) => (
                 <>
-                  <button role="menuitem" disabled={!canBringForward} onClick={() => { bringToFront(); close(); }}><span className="menu-icon">⇈</span>最前面へ <small>いちばん手前</small></button>
-                  <button role="menuitem" disabled={!canBringForward} onClick={() => { bringForward(); close(); }}><span className="menu-icon">↑</span>前面へ <small>1 つ前へ</small></button>
-                  <div className="menu-divider" role="separator" />
-                  <button role="menuitem" disabled={!canSendBackward} onClick={() => { sendBackward(); close(); }}><span className="menu-icon">↓</span>背面へ <small>1 つ後ろへ</small></button>
-                  <button role="menuitem" disabled={!canSendBackward} onClick={() => { sendToBack(); close(); }}><span className="menu-icon">⇊</span>最背面へ <small>いちばん奥</small></button>
+                  <MenuItem icon="⇈" label="最前面へ" hint="いちばん手前" disabled={!canBringForward} onSelect={() => { bringToFront(); close(); }} />
+                  <MenuItem icon="↑" label="前面へ" hint="1 つ前へ" disabled={!canBringForward} onSelect={() => { bringForward(); close(); }} />
+                  <li role="separator" className="menu-separator"><hr className="dads-divider" data-color="solid-gray-420" /></li>
+                  <MenuItem icon="↓" label="背面へ" hint="1 つ後ろへ" disabled={!canSendBackward} onSelect={() => { sendBackward(); close(); }} />
+                  <MenuItem icon="⇊" label="最背面へ" hint="いちばん奥" disabled={!canSendBackward} onSelect={() => { sendToBack(); close(); }} />
                 </>
               )}
-            </Dropdown>
-            <label className="tbtn setting-control" title="配置時にグリッドへ揃えます">
-              <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />
-              <Icon name="grid" />
-              <span>スナップ</span>
-            </label>
-            {!hasSelectedNode && <span className="selection-hint">要素を選択して配置</span>}
-          </RibbonGroup>
-          <RibbonGroup label="データ" className="data-group">
-            <button className="tbtn ghost" onClick={() => onOpenModal('project')}><Icon name="data" />プロジェクト</button>
-          </RibbonGroup>
-        </header>
+            </MenuListBox>
+            <span className="snap-control" title="配置時にグリッドへ揃えます">
+              <Checkbox label="グリッドにスナップ" checked={snap} onChange={(e) => setSnap(e.target.checked)} />
+            </span>
+            {!hasSelectedNode && <span className="selection-hint">要素を選択するとレイヤー順を変更できます</span>}
+          </ToolGroup>
+          <ToolGroup label="データ" className="data-group">
+            <button className="dads-button tbtn" type="button" data-type="outline" data-size="sm" onClick={() => onOpenModal('project')}><Icon name="data" />プロジェクト</button>
+          </ToolGroup>
+        </div>
       )}
+    </div>
+  );
+}
+
+/** 主要アクション「書き出す」。DADS の塗りボタンを開閉ボタンにしたメニュー。 */
+function ExportMenu({ onExport }: { onExport: (kind: 'pptx' | 'svg' | 'png') => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    window.addEventListener('click', onDoc);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('click', onDoc);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  const pick = (kind: 'pptx' | 'svg' | 'png') => {
+    setOpen(false);
+    void onExport(kind);
+  };
+  return (
+    <div className="dads-menu-list-box" ref={ref}>
+      <button
+        className="dads-button tbtn"
+        type="button"
+        data-type="solid-fill"
+        data-size="sm"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+      >
+        <Icon name="export" />書き出す
+      </button>
+      <div className="dads-menu-list-box__popup" data-align="end" hidden={!open}>
+        <ul className="dads-menu-list" role="menu" aria-label="書き出す形式">
+          <MenuItem icon="P" label="PowerPoint" hint=".pptx" onSelect={() => pick('pptx')} />
+          <MenuItem icon="◇" label="ベクター画像" hint=".svg" onSelect={() => pick('svg')} />
+          <MenuItem icon="▣" label="画像" hint=".png" onSelect={() => pick('png')} />
+        </ul>
+      </div>
     </div>
   );
 }

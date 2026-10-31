@@ -63,7 +63,7 @@ export function Edges({ doc, link }: { doc: DiagramDoc; link: { fromPt: Point; p
         <polyline
           points={`${link.fromPt.x},${link.fromPt.y} ${link.pt.x},${link.pt.y}`}
           fill="none"
-          stroke="#0b74de"
+          stroke="#0017c1"
           strokeWidth={2}
           strokeDasharray="5 4"
         />

@@ -168,16 +168,17 @@ export function Canvas() {
         ))}
       </div>
 
-      <div id="statusbar">
-        <span>{doc.nodes.length} 個の要素</span><i />
+      <div id="statusbar" aria-live="polite">
+        <span>{doc.nodes.length} 個の要素</span>
+        <span aria-hidden="true">・</span>
         <span>{doc.edges.length} 本の接続</span>
       </div>
-      <div id="zoombar">
-        <button title="縮小" aria-label="縮小" onClick={() => zoomCenter(0.87)}>−</button>
-        <div className="zval" aria-label={`倍率 ${Math.round(view.zoom * 100)} パーセント`}>{Math.round(view.zoom * 100)}%</div>
-        <button title="拡大" aria-label="拡大" onClick={() => zoomCenter(1.15)}>＋</button>
-        <span className="zoom-divider" />
-        <button className="fit-button" title="全体を表示" aria-label="全体を表示" onClick={fitView}>⤢</button>
+      <div id="zoombar" role="group" aria-label="表示倍率">
+        <button className="dads-button zoom-button" type="button" data-type="text" data-size="xs" aria-label="縮小" title="縮小" onClick={() => zoomCenter(0.87)}>−</button>
+        <output className="zval" aria-label={`倍率 ${Math.round(view.zoom * 100)} パーセント`}>{Math.round(view.zoom * 100)}%</output>
+        <button className="dads-button zoom-button" type="button" data-type="text" data-size="xs" aria-label="拡大" title="拡大" onClick={() => zoomCenter(1.15)}>＋</button>
+        <span className="zoom-divider" aria-hidden="true" />
+        <button className="dads-button zoom-fit" type="button" data-type="text" data-size="xs" onClick={fitView}>全体を表示</button>
       </div>
     </div>
   );
